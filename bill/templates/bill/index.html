@@ -1,0 +1,127 @@
+{% extends 'bill/layout.html' %} {% block content %}
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+                aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">AWS' Billing</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Business Unit
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Select User
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a onclick="getuser(this)" data-user="none">All</a>
+                        </li>
+                        {% for i in accounts %}
+                        <li>
+                            <a onclick="getuser(this)" data-user={{i}}>{{i}}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+</nav>
+
+
+
+<div id="line">
+    <div id="top_x_div" style="height: 250px;"></div>
+</div>
+
+<h3>AWS account billing details</h3>
+<p>Account charges as per service</p>
+
+<div class="row">
+    <div class="col-sm-5">
+        <div class="form-group">
+            <div class="col-md-4">
+                <select id="multiselect-services" class="multiselect-ui form-control target" multiple="multiple">
+                    {% for key, value in dictionary.items %}
+                    <option value={{key}}>{{key}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#multiselect-services').multiselect();
+        });
+    </script>
+
+    <div class="col-sm-4">
+        <a href="/bill" type="button" class="btn btn-primary">Dashboard</a>
+        <a href="/bill/daily" type="button" class="btn btn-primary">Daily</a>
+        <a href="/bill/weekly" type="button" class="btn btn-primary">Weekley</a>
+        <a href="/bill/monthly" type="button" class="btn btn-primary">Monthly</a>
+    </div>
+</div>
+
+<table class="table table-bordered table-striped" id="billingdetails">
+    <thead>
+        <tr class="row">
+            <th class="col-md-2">Service Name</th>
+            <th class="col-md-8">Product</th>
+            <th class="col-md-2">Service Rate</th>
+        </tr>
+    </thead>
+    <tbody id="dailydata">
+        {% for key, value in dictionary.items %}
+        <tr class="row">
+            <th class="col-md-2 servicesName">{{key}}</th>
+            {% for ke,va in value.items %} {% if ke == "products" %}
+            <th class="col-md-8">
+                <ul class="list-group">
+                    {% for k in va %}
+                    <li onclick="getvalues(this)" id="{{key}} {{k}}">
+                        {{k}}
+                    </li>
+                    <table class="table-bordered table-striped" id="show_{{key}} {{k}}">
+                    </table>
+                    {% endfor %}
+                </ul>
+            </th>
+            {% endif %} {% if ke == "price" %}
+            <th class="col-md-2 ServiceRates" data-name="{{key}}">
+                {{va}}
+            </th>
+            {% endif %} {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

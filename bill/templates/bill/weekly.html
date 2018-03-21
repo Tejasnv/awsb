@@ -1,0 +1,305 @@
+{% extends 'bill/layout.html' %} {% block content %}
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+                aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">AWS' Billing</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Select Account
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Select User
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a onclick="getuser(this)" data-user="none">All</a>
+                        </li>
+                        {% for i in accounts %}
+                        <li>
+                            <a onclick="getuser(this)" data-user={{i}}>{{i}}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+</nav>
+
+
+<div id="curve_chart" style=" height: 250px"></div>
+
+<h3>AWS account billing details</h3>
+<p>Account charges as per service</p>
+<div class="row">
+    <div class="col-sm-5">
+        <div class="form-group">
+            <div class="col-md-4">
+                <select id="multiselect-services" class="multiselect-ui form-control target" multiple="multiple">
+                    {% for i in dictionary %}
+                    <option value={{i}}>{{i}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#multiselect-services').multiselect();
+        });
+    </script>
+
+    <div class="col-sm-4">
+        <a href="/bill" type="button" class="btn btn-primary">Dashboard</a>
+        <a href="/bill/daily" type="button" class="btn btn-primary">Daily</a>
+        <a href="/bill/weekly" type="button" class="btn btn-primary">Weekley</a>
+        <a href="/bill/monthly" type="button" class="btn btn-primary">Monthly</a>
+    </div>
+
+    <div class="col-sm-2">
+        <input type="text" class="form-control datepicker" id="startdate" placeholder="Start Date">
+    </div>
+</div>
+
+
+<table class="table table-bordered table-striped" id="billingdetails">
+    <thead>
+        <tr class="row">
+            <th class="col-md-2">Service Name</th>
+            <th class="col-md-8">Product</th>
+            <th class="col-md-2">Service Rate</th>
+        </tr>
+    </thead>
+    <tbody id="dailydata">
+        {% for key, value in dictionary.items %}
+        <tr class="row">
+            <th class="col-md-2">{{key}}</th>
+            {% for ke,va in value.items %} {% if ke == "products" %}
+            <th class="col-md-8">
+                <ul class="list-group">
+                    {% for k in va %}
+                    <li onclick="getvalues(this)" id="{{key}} {{k}}">
+                        {{k}}
+                    </li>
+                    <table class="table-bordered table-striped" id="show_{{key}} {{k}}">
+                    </table>
+                    {% endfor %}
+                </ul>
+            </th>
+            {% endif %} {% if ke == "price" %}
+            <th class="col-md-2 ServiceRate" data-name="{{key}}" value="{{va}}">
+                {{va}}
+            </th>
+            {% endif %} {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-------------------------------------------------- 
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+---->
+
+<script type="text/javascript">
+
+    servicearr = [];
+    servicearr[0] = "none";
+
+    //    alert(servicearr);
+
+
+    function arrangeDates(selecteddate) {
+        considerDates = []
+        var considereDate = parseInt(selecteddate.substr(6, 2));
+        var addthis = parseInt(selecteddate)
+
+        //            alert(selecteddate);
+        var mnt = parseInt(selecteddate.substr(4, 2));
+        var lim = 31;
+        var limbreak = 69;
+        var yearbreak = 8800;
+
+        if (mnt == 1 || mnt == 3 || mnt == 5 || mnt == 7 || mnt == 8 || mnt == 10 || mnt == 12) {
+            var lim = 31;
+            var limbreak = 69;
+        }
+        else if (mnt == 4 || mnt == 6 || mnt == 9 || mnt == 11) {
+            var lim = 30;
+            var limbreak = 70;
+        }
+        else if (mnt == 2) {
+            var yer = parseInt(selecteddate.substr(0, 4));
+            if ((yer % 4) == 0) {
+                var lim = 29;
+                var limbreak = 71;
+            }
+            else {
+                var lim = 28;
+                var limbreak = 72;
+            }
+        }
+        for (var i = 0; i < 7; i++) {
+            if (considereDate <= lim) {
+                considerDates.push(addthis++);
+                considereDate++;
+            }
+            else {
+                addthis = addthis + limbreak;
+                if (mnt == 12) {
+                    addthis = addthis + yearbreak;
+                }
+                considerDates.push(addthis);
+                considereDate = 0;
+                addthis++;
+            }
+        }
+        return (considerDates)
+
+    }
+
+    function thisWeek(date) {
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        thisweek = [];
+        var dayofweek = ($.datepicker.formatDate('DD', date));
+
+        for (var i = 0; i < days.length; i++) {
+            if (days[i] == dayofweek) {
+                for (var j = i; j < days.length; j++) {
+                    thisweek.push(days[j])
+                }
+                for (var j = 0; j < i; j++) {
+                    thisweek.push(days[j])
+                }
+            }
+        }
+    }
+
+
+    var oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 6);
+
+    function formatDate(date) {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+        return [year, month, day].join('');
+    }
+
+    considerDates = arrangeDates(formatDate(oneWeekAgo));
+
+    thisWeek(oneWeekAgo);
+    //    console.log(considerDates);
+    selecteddate = considerDates;
+
+    //    alert(selecteddate);
+    $.ajax({
+        method: 'GET',
+        url: 'http://localhost:8000/bill/getday',
+        //            data: { value: selecteddate, action: "daily", select: servicearr },
+        data: { value: selecteddate, action: "weekly" },
+        success: function (response) {
+            document.getElementById("dailydata").innerHTML = response;
+            showthis();
+        },
+        error: function () {
+            alert("nothing works with weekly Default")
+        }
+    });
+
+
+    $(".datepicker").change(function () {
+        selecteddate = ((document.getElementById('startdate').value).split("-").join(""));
+        var date = $(this).datepicker('getDate');
+
+        considerDates = arrangeDates(selecteddate);
+        thisWeek(date);
+
+        selecteddate = considerDates;
+        //        alert(selecteddate)
+        $.ajax({
+            method: 'GET',
+            url: 'http://localhost:8000/bill/getday',
+            data: { value: selecteddate, action: "weekly" },
+            success: function (response) {
+                //                alert(response);
+                document.getElementById("dailydata").innerHTML = response;
+                showthis();
+            },
+            error: function () {
+                alert("nothing works with weekly 01")
+            }
+        });
+    });
+    function showthis() {
+        var arrayresult = new Array;
+        arrayresult[0] = new Array;
+        arrayresult[0][0] = "Services";
+        for (i = 1; i < 8; i++) {
+            arrayresult[i] = new Array;
+            arrayresult[i][0] = thisweek[i - 1];
+        }
+
+        getHiddenData = document.getElementsByClassName('ServiceRate');
+        //        val = getHiddenData[1].value;
+
+        for (var i = 1; i < getHiddenData.length + 1; i++) {
+            sectionNames = getHiddenData[i - 1].getAttribute("data-name");
+            arrayresult[0][i] = sectionNames;
+
+            var result = getHiddenData[i - 1].value.substring(1, getHiddenData[i - 1].value.length - 1);
+            var x = (result).split(",");
+
+            for (var j = 1; j < 8; j++) {
+                arrayresult[j][i] = parseFloat(x[j - 1])
+            }
+        }
+
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable(arrayresult);
+            var options = {
+                //                curveType: 'function',
+                curveType: 'none',
+                legend: { position: 'right', textStyle: { fontSize: 10 } }
+            };
+            var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+            chart.draw(data, options);
+        }
+    }
+
+</script> {% endblock %}

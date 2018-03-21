@@ -1,0 +1,20 @@
+    <thead>
+        <tr class="row">
+            <td class="col-md-3">Product Region</td>
+            <td class="col-md-3">Instance Type</td>
+            <td class="col-md-4">identity/TimeInterval</td>
+            <td class="col-md-2">Product Rate</td>
+        </tr>
+    </thead>
+    <tbody>
+    {% for k,c in curs.items %}
+        {% for i in c %}
+            <tr class="row">
+                <td class="col-md-2">{{i.1}}</td>
+                <td class="col-md-4">{{i.2}}</td>
+                <td class="col-md-4">{{i.0}}</td>
+                <td class="col-md-2">{{i.3}}</td>
+            </tr>
+        {% endfor %}
+    {% endfor %}
+    </tbody>

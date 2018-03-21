@@ -1,0 +1,28 @@
+<tbody>
+    {% for key, value in dictionary.items %}
+    <tr class="row">
+        <th class="col-md-2 servicesName">{{key}}</th>
+        {% for ke,va in value.items %} {% if ke == "products" %}
+        <th class="col-md-8">
+            <ul class="list-group">
+                {% for k in va %}
+                <li onclick="getvalues(this)" id="{{key}} {{k}}">
+                    {{k}}
+                </li>
+                <table class="table-bordered table-striped" id="show_{{key}} {{k}}">
+                </table>
+                {% endfor %}
+            </ul>
+        </th>
+        {% endif %} {% if ke == "price" %}
+        <th class="col-md-2 ServiceRates" data-name="{{key}}">
+            {{va|floatformat:5 }}
+        </th>
+        {% endif %} {% endfor %}
+    </tr>
+    {% endfor %}
+</tbody>
+
+{% for ky,cl in daysDistri.items %}
+<input type="hidden" class="col-md-2 ServiceRate" data-name="{{ky}}" value="{{cl}}"> {% endfor %}
+

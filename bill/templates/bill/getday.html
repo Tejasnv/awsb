@@ -1,0 +1,52 @@
+<tbody>
+    {% for key, value in dictionary.items %} {% for v in viewServices %} {% if v == key %}
+
+    <tr class="row">
+        <th class="col-md-2">{{key}}</th>
+        {% for ke,va in value.items %} {% if ke == "products" %}
+        <th class="col-md-8">
+            <ul class="list-group">
+                {% for k in va %}
+                <li onclick="getvalues(this)" id="{{key}} {{k}}">
+                    {{k}}
+                </li>
+                <table class="table-bordered table-striped" id="show_{{key}} {{k}}">
+                </table>
+                {% endfor %}
+            </ul>
+        </th>
+        {% endif %} {% if ke == "price" %} {% for curk,curv in cur.items %} {% if curk == key %}
+        <th class="col-md-2 ServiceRates" data-name="{{key}}">
+            {{curv}}
+        </th>
+        {% endif %} {% endfor %} {% endif %} {% endfor %}
+    </tr>
+
+    {% endif %} {% endfor %} {% endfor %}
+</tbody>
+
+{% for ky,cl in daysDistri.items %}
+<input type="hidden" class="col-md-2 ServiceRate" data-name="{{ky}}" value="{{cl}}"> {% endfor %}
+
+<!--
+
+        {% for v in viewServices %}
+        {% if v == key %} 
+
+        {% endif %} 
+        {% endfor %}
+
+        {% for v in viewServices %}
+            {% if v == key %} 
+    {% endif %} 
+        {% endfor %}
+    {% for ky,cl in daysDistri.items %}
+    <input type="hidden" class="col-md-2 ServiceRate" data-name="{{ky}}" value="{{cl}}"> {% endfor %}
+    
+{{viewServices}}
+
+{{cur}}
+
+{{daysDistri}}
+
+-->

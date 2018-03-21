@@ -1,0 +1,310 @@
+{% extends 'bill/layout.html' %} {% block content %}
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+                aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">AWS' Billing</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Select Account
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <a href="#">Dummy Data</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Select User
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a onclick="getuser(this)" data-user="none">All</a>
+                        </li>
+                        {% for i in accounts %}
+                        <li>
+                            <a onclick="getuser(this)" data-user={{i}}>{{i}}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+</nav>
+
+
+
+
+<style>
+    .ui-datepicker-calendar {
+        display: none;
+    }
+</style>
+
+<div id="curve_chart" style=" height: 250px"></div>
+
+<h3>AWS account billing details</h3>
+<p>Account charges as per service</p>
+<div class="row">
+    <div class="col-sm-5">
+        <div class="form-group">
+            <div class="col-md-4">
+                <select id="multiselect-services" class="multiselect-ui form-control target" multiple="multiple">
+                    {% for i in dictionary %}
+                    <option value={{i}}>{{i}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#multiselect-services').multiselect();
+        });
+    </script>
+
+
+    <div class="col-sm-4">
+        <a href="/bill" type="button" class="btn btn-primary">Dashboard</a>
+        <a href="/bill/daily" type="button" class="btn btn-primary">Daily</a>
+        <a href="/bill/weekly" type="button" class="btn btn-primary">Weekley</a>
+        <a href="/bill/monthly" type="button" class="btn btn-primary">Monthly</a>
+    </div>
+
+
+    <div class="col-sm-2">
+        <input name="startDate" id="startDate" class="form-control date-picker" placeholder="Select Month" />
+    </div>
+
+</div>
+
+<table class="table table-bordered table-striped" id="billingdetails">
+    <thead>
+        <tr class="row">
+            <th class="col-md-2">Service Name</th>
+            <th class="col-md-8">Product</th>
+            <th class="col-md-2">Service Rate</th>
+        </tr>
+    </thead>
+    <tbody id="dailydata">
+        {% for key, value in dictionary.items %}
+        <tr class="row">
+            <th class="col-md-2">{{key}}</th>
+            {% for ke,va in value.items %} {% if ke == "products" %}
+            <th class="col-md-8">
+                <ul class="list-group">
+                    {% for k in va %}
+                    <li onclick="getvalues(this)" id="{{key}} {{k}}">
+                        {{k}}
+                    </li>
+                    <table class="table-bordered table-striped" id="show_{{key}} {{k}}">
+                    </table>
+                    {% endfor %}
+                </ul>
+            </th>
+            {% endif %} {% if ke == "price" %}
+            <th class="col-md-2 ServiceRates" data-name="{{key}}" value="{{va}}">
+                {{va}}
+            </th>
+            {% endif %} {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+
+    servicearr = [];
+    servicearr[0] = "none";
+
+
+    var date = new Date();
+    var startYear = date.getFullYear()
+    var startMonth = date.getMonth() + 1
+    var startMonth = ("0" + startMonth).slice(-2);
+
+    var monthDate = (startYear + "" + startMonth);
+
+    var tempDate = new Date(startYear + "-" + startMonth + "-" + "01 00:00");
+    var getDayOfWeek = tempDate.getDay()
+
+    var d = new Date(tempDate);
+    d.setMonth(d.getMonth() + 1, 0);
+
+    var dayOfTheWeekValue = parseInt(tempDate.getDay());
+    var numberOfDays = parseInt(d.getDate());
+
+    data = [monthDate, numberOfDays, dayOfTheWeekValue];
+
+    //    alert(data)
+    $.ajax({
+        method: 'GET',
+        url: 'http://localhost:8000/bill/getday',
+        //        data: { values: data, action: "monthly", select: servicearr },
+        data: { values: data, action: "monthly" },
+        success: function (response) {
+            document.getElementById("dailydata").innerHTML = response;
+            showthis();
+        },
+        error: function () {
+            alert("nothing works with 2")
+        }
+    });
+
+
+    $(function () {
+        $('.date-picker').datepicker(
+            {
+                dateFormat: "mm/yy",
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+                onClose: function (dateText, inst) {
+
+                    function isDonePressed() {
+                        return ($('#ui-datepicker-div').html().indexOf('ui-datepicker-close ui-state-default ui-priority-primary ui-corner-all ui-state-hover') > -1);
+                    }
+
+                    if (isDonePressed()) {
+                        var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+                        var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+                        $(this).datepicker('setDate', new Date(year, month, 1)).trigger('change');
+
+                        $('.date-picker').focusout()//Added to remove focus from datepicker input box on selecting date
+
+                        month = parseInt(month) + 1
+                        month = month.toString();
+
+                        var tempDate = new Date(year + "-" + month + "-" + "01 00:00");
+                        var getDayOfWeek = tempDate.getDay()
+
+                        var d = new Date(tempDate);
+                        d.setMonth(d.getMonth() + 1, 0);
+
+                        var dayOfTheWeekValue = parseInt(tempDate.getDay());
+                        var numberOfDays = parseInt(d.getDate());
+                        var month = ("0" + month).slice(-2);
+
+                        //                        console.log("Day of start month : "+ dayOfTheWeekValue);
+                        //                        console.log("Day of End month : "+ numberOfDays);
+
+                        //                        alert(numberOfWeeks)
+
+                        dateInFormat = year + month;
+                        data = [dateInFormat, numberOfDays, dayOfTheWeekValue];
+
+                        selecteddate = dateInFormat
+
+                        $.ajax({
+                            method: 'GET',
+                            url: 'http://localhost:8000/bill/getday',
+                            data: { values: data, action: "monthly" },
+                            success: function (response) {
+                                document.getElementById("dailydata").innerHTML = response;
+                                showthis();
+                            },
+                            error: function () {
+                                alert("nothing works with 2")
+                            }
+                        });
+                    }
+                },
+                beforeShow: function (input, inst) {
+                    inst.dpDiv.addClass('month_year_datepicker')
+                    if ((datestr = $(this).val()).length > 0) {
+                        year = datestr.substring(datestr.length - 4, datestr.length);
+                        month = datestr.substring(0, 2);
+                        $(this).datepicker('option', 'defaultDate', new Date(year, month - 1, 1));
+                        $(this).datepicker('setDate', new Date(year, month - 1, 1));
+                        $(".ui-datepicker-calendar").hide();
+                    }
+                }
+            })
+    });
+</script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+
+    function showthis() {
+
+        var arrayresult = new Array;
+        arrayresult[0] = new Array;
+        arrayresult[0][0] = "Services";
+        for (i = 1; i < 7; i++) {
+            arrayresult[i] = new Array;
+            arrayresult[i][0] = "Week " + i;
+        }
+
+        getHiddenData = document.getElementsByClassName('ServiceRate');
+        //        val = getHiddenData[1].value;
+
+
+        for (var i = 1; i < getHiddenData.length + 1; i++) {
+            sectionNames = getHiddenData[i - 1].getAttribute("data-name");
+            arrayresult[0][i] = sectionNames;
+
+            var result = getHiddenData[i - 1].value.substring(1, getHiddenData[i - 1].value.length - 1);
+            var x = (result).split(",");
+            for (var j = 1; j < 7; j++) {
+                arrayresult[j][i] = parseFloat(x[j - 1])
+            }
+        }
+//        console.log(arrayresult);
+
+
+//        for (var i = 0; i < getHiddenData.length; i++) {
+            //        alert(getHiddenData[i].innerHTML)
+//        }
+
+        getHiddenData = document.getElementsByClassName('ServiceRates');
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable(arrayresult);
+
+            /*
+                        var data = google.visualization.arrayToDataTable([
+                      ['Year', 'AmazonS3', 'AmazonEC2', 'awskms', 'AmazonCloudWatch', 'AmazonSNS', 'AmazonQuickSight'],
+                      ['week1',  1000,      400,  1000,      400,  1000,      400],
+                      ['week2',  1170,      460,  1000,      400,  1000,      400],
+                      ['week3',  1000,      400,  660,       1120,  1000,      400],
+                      ['week4',  1030,  1000,      400,  1000,      400,      540]
+                    ]);
+            */
+            //arrayresult);
+
+            var options = {
+                curveType: 'none',
+                legend: { position: 'right', textStyle: { fontSize: 10 } }
+            };
+            var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+            chart.draw(data, options);
+        }
+    }
+    showthis();
+</script> {% endblock %}
